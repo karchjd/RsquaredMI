@@ -1,4 +1,4 @@
-Package: RSqauredMI
+Package: RSquaredMI
 Type: Package
 Title: What the Package Does (Title Case)
 Version: 0.1.0
@@ -15,3 +15,4 @@ Config/testthat/edition: 3
 Imports: 
     lm.beta,
     mice
+RoxygenNote: 7.3.2
