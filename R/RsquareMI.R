@@ -1,35 +1,36 @@
-print.RsquaredMI <- function(x) {
-  cat("R-squared SP:", "\n", x$R_squared, "\n", "\n")
-  if (!is.null(x$beta)) {
-    cat("Beta Coefficients SP:", "\n")
-    print(x$beta)
-    cat("\n")
-  }
-  if (!is.null(x$zero)) {
-    cat("Zero Order SP:", "\n")
-    print(x$zero)
-    cat("\n")
-  }
+print.Output <- function(x) {
+  cat('R-squared SP:', '\n')
+  print(x$Rtotal)
+  cat('\n')
+  cat('Beta Coefficients SP:', '\n')
+  print(x$total)
+  cat('\n')
 }
-
 #' Calculate R-squared with Standardized Predictors
 #'
-#' This function calculates the R-squared value for a linear model applied to a multiply imputed dataset.
-#' Optionally, it can also return the standardized regression coefficients and zero-order correlations.
+#' This function calculates the R-squared value for a linear model applied to a multiply imputed dataset, along with standardized regression coefficients.
+#' Optionally, it can also return the confidence intervals of the standardized regression coefficients and the zero-order correlations.
 #'
 #' @param dataset A multiply imputed dataset of class `mids` from the `mice` package.
 #' @param model A linear model formula specifying the model to be fitted.
-#' @param beta Logical. If `TRUE`, the function returns the standardized regression coefficients. Default is `FALSE`.
+#' @param conf Logical. If `TRUE`, the function returns the confidence intervals of the standardized regression coefficients. Default is `FALSE`.
 #' @param cor Logical. If `TRUE`, the function returns the zero-order correlations between the outcome and each predictor. Default is `FALSE`.
+#' @param alpha A real number between 0 and 1 specifying the significance level of the confidence intervals. Default is `0.05`.
 #'
 #' @return A list of class `RsquaredMI` containing the following elements:
 #' \item{R_squared}{The R-squared value calculated using standardized predictors.}
-#' \item{beta}{The standardized regression coefficients (if `beta = TRUE`).}
+#' \item{R}{The square root of the R-squared value, or the multiple correlation R.}
+#' \item{Rtotal}{A vector containing both the R-squared and R.}
+#' \item{beta}{The standardized regression coefficients.}
+#' \item{lower}{The lowerbound of the condidence intervals of the standardized regression coefficients  (if `conf = TRUE`).}
+#' \item{upper}{The upperbound of the condidence intervals of the standardized regression coefficients  (if `conf = TRUE`).}
+#' \item{dfe}{The error degrees of freedom of the condidence intervals of the standardized regression coefficients  (if `conf = TRUE`).}
 #' \item{zero}{The zero-order correlations between the outcome and each predictor (if `cor = TRUE`).}
 #'
 #' @details The function first completes the imputed datasets using `mice::complete`.
 #' It then calculates the linear model on each imputed dataset and averages the standardized coefficients and correlations across imputations.
 #' The final R-squared value is computed as the sum of the products of the averaged standardized coefficients and averaged correlations.
+#' The confidence intervals of the standardized regression coefficients are calculated under the assumption that the variables are multivarate normally distributed
 #'
 #' @import mice
 #' @importFrom lm.beta lm.beta
@@ -45,78 +46,104 @@ print.RsquaredMI <- function(x) {
 #' }
 #'
 #' @export
-RsquareSP <- function(dataset,
-                      model,
-                      beta = FALSE,
-                      cor = FALSE) {
-  results <- list(R_squared = NULL, Beta = NULL, Zero = NULL)
-  class(results) <- "RsquaredMI"
-
-  NumberOfImp <- dataset$m
+RsquareSP = function(dataset,
+                     model,
+                     cor = FALSE,
+                     conf = FALSE,
+                     alpha = 0.05){
+  results <- list(R_squared=NULL,R=NULL,Rtotal=NULL,Beta=NULL,Lower=NULL,Upper=NULL,Dfe=NULL,Zero=NULL,Total=NULL)
+  class(results) <- "Output"
+  NumberOfImp = dataset$m
   dataset <- mice::complete(dataset, "long", inc = TRUE)
-  modeltemp <- lm(model, dataset)
+  modeltemp <- lm(model,dataset)
   vars <- names(modeltemp$model)
   outcome <- vars[1]
   predictors <- vars[2:length(vars)]
-
-  meanbeta <- meancor <- rep(0, times = length(predictors))
-  for (m in 1:NumberOfImp) {
-    datasetm <- dataset[dataset[, 1] == m, vars]
-    modelb <- lm(model, datasetm)
+  meanbeta <- meancor <- SDX <- Umeanbeta <- cjmean <- Sxjsquaremean <- Sxjysquaremean <- rep(0, times=length(predictors))
+  SDY <- Sesquaremean <- bjsquaremean <- bSxbmean <- Sysquaremean <- 0
+  meanbetam = matrix(0,NumberOfImp,length(predictors))
+  for (m in 1:NumberOfImp){    
+    datasetm <- dataset[dataset[,1]==m,vars]
+    modelb <- lm(model,datasetm)
     modelbeta <- lm.beta::lm.beta(modelb)
-    meanbeta <- meanbeta + modelbeta$standardized.coefficients[2:length(modelbeta$standardized.coefficients)]
-    meancor <- meancor + cor(datasetm)[1, 2:ncol(datasetm)]
-  }
-  meanbeta <- meanbeta / NumberOfImp
-  meancor <- meancor / NumberOfImp
-  results$R_squared <- sum(meanbeta * meancor)
+    meanbetam[m,] <- modelbeta$standardized.coefficients[2:length(modelbeta$standardized.coefficients)]
+    meanbeta <- meanbeta + meanbetam[m,]
+    meancor <- meancor + cor(datasetm)[1,2:ncol(datasetm)]
 
-  if (beta) {
-    results$beta <- meanbeta
-    names(results$beta) <- predictors
+    #CALCULATING BETA SES
+    covxy <- cov(datasetm)
+    cj <- diag(solve(covxy[predictors,predictors]))
+    cjmean <- cjmean + cj
+    
+    Sxjsquare <- diag(covxy)[predictors]
+    Sxjsquaremean <- Sxjsquaremean + Sxjsquare
+    Sxjysquare <- covxy[1,2:ncol(covxy)]
+    Sxjysquaremean <- Sxjysquaremean + Sxjysquare
+    DFE <- nrow(datasetm) - length(predictors) - 1
+    Sesquare <- as.vector((t(modelb$residuals)%*%modelb$residuals)/DFE)
+    Sesquaremean <- Sesquaremean + Sesquare
+    Sysquare <- var(datasetm[,outcome])
+    Sysquaremean <- Sysquaremean + Sysquare 
+    bjsquare <- (modelb$coefficients)^2
+    bjsquare <- bjsquare[2:length(bjsquare)]
+    bjsquaremean <- bjsquaremean + bjsquare
+    bSxb <- t(modelb$coefficients)[-1]%*%covxy[predictors,predictors]%*%(modelb$coefficients)[-1]
+    bSxbmean <- bSxbmean + bSxb
+    SEbeta <- sqrt((Sxjsquare*cj*Sesquare)/((nrow(datasetm)-3)*Sysquare) +
+                    (bjsquare*(Sxjsquare*as.vector(bSxb) - Sxjsquare*Sesquare - Sxjysquare))/
+                    ((nrow(datasetm)-3)*(sqrt(Sysquare))^4))
+    SEb <- sqrt(diag(vcov(modelb)))
+    SEb <- SEb[2:length(SEb)]
+    Umeanbeta <- Umeanbeta + SEbeta^2
   }
-  if (cor) {
+  meanbeta <- meanbeta/NumberOfImp
+  meancor <- meancor/NumberOfImp
+  Sxjsquaremean <- Sxjsquaremean/NumberOfImp
+  Sxjysquaremean <- Sxjysquaremean/NumberOfImp
+  Sysquaremean <- Sysquaremean/NumberOfImp
+  bjsquaremean <- bjsquaremean/NumberOfImp
+  bSxbmean <- bSxbmean/NumberOfImp
+  Umeanbeta <- Umeanbeta/NumberOfImp
+  cjmean <- cjmean/NumberOfImp
+  Sesquaremean <- Sesquaremean/NumberOfImp
+  Bmeanbeta <- matrixStats::colVars(meanbetam)
+  Tmeanbeta <- Umeanbeta + (1+1/NumberOfImp)*Bmeanbeta
+            
+  #CALCULATING DEGREES OF FREEDOM (REITER, 2007)
+  vcom <- ((DFE + 1)/(DFE + 3))*DFE
+  gammameanbeta <- (1+1/NumberOfImp)*Bmeanbeta/Tmeanbeta
+  vmmeanbeta = (NumberOfImp - 1)*gammameanbeta^(-2)
+  vobsmeanbeta = (1-gammameanbeta)*vcom
+  DFEmeanbeta = (1/vmmeanbeta + 1/vobsmeanbeta)^(-1)
+  
+  lowermeanbeta <- meanbeta + qt(alpha/2,DFEmeanbeta)*sqrt(Tmeanbeta)
+  uppermeanbeta <- meanbeta + qt(1-alpha/2,DFEmeanbeta)*sqrt(Tmeanbeta)
+
+  results$R_squared <- sum(meanbeta*meancor)
+  results$R <- sqrt(results$R_squared) 
+  results$Rtotal <- c(results$R_squared, results$R)
+  names(results$Rtotal) <- c("R^2","R")
+  results$beta <- meanbeta
+  results$lower <- lowermeanbeta
+  results$upper <- uppermeanbeta
+  results$dfe <- DFEmeanbeta
+  names(results$beta) <- predictors
+  results$total <- as.matrix(results$beta)
+  Names <- "Beta"
+  colnames(results$total) <- Names
+  if (conf == TRUE) {
+    results$lower <- lowermeanbeta
+    results$upper <- uppermeanbeta
+    results$dfe <- DFEmeanbeta
+    results$total <- cbind(results$total,results$dfe, results$lower,results$upper)
+    Names = c(Names, "df", "Lowerbound","Upperbound")
+    colnames(results$total) <- Names
+  }
+  if (cor == TRUE) {
     results$zero <- meancor
-    names(results$zero) <- predictors
+    names(results$zero) <- predictors  
+    results$total <- cbind(results$total,results$zero)
+    colnames(results$total) <- c(Names, "Zero Order")
   }
-
-  return(results)
-}
-
-RsquareSP <- function(dataset,
-                      model,
-                      beta = FALSE,
-                      cor = FALSE) {
-  results <- list(R_squared = NULL, Beta = NULL, Zero = NULL)
-  class(results) <- "RsquaredMI"
-
-  NumberOfImp <- dataset$m
-  dataset <- mice::complete(dataset, "long", inc = TRUE)
-  modeltemp <- lm(model, dataset)
-  vars <- names(modeltemp$model)
-  outcome <- vars[1]
-  predictors <- vars[2:length(vars)]
-
-  meanbeta <- meancor <- rep(0, times = length(predictors))
-  for (m in 1:NumberOfImp) {
-    datasetm <- dataset[dataset[, 1] == m, vars]
-    modelb <- lm(model, datasetm)
-    modelbeta <- lm.beta::lm.beta(modelb)
-    meanbeta <- meanbeta + modelbeta$standardized.coefficients[2:length(modelbeta$standardized.coefficients)]
-    meancor <- meancor + cor(datasetm)[1, 2:ncol(datasetm)]
-  }
-  meanbeta <- meanbeta / NumberOfImp
-  meancor <- meancor / NumberOfImp
-  results$R_squared <- sum(meanbeta * meancor)
-
-  if (beta) {
-    results$beta <- meanbeta
-    names(results$beta) <- predictors
-  }
-  if (cor) {
-    results$zero <- meancor
-    names(results$zero) <- predictors
-  }
-
   return(results)
 }
