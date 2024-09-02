@@ -75,6 +75,6 @@ XYimp <- mice(XYmis, maxit = 10, m = NumberOfImp, printFlag = FALSE, seed = seed
 
 model <- as.formula("Y~X1+X2+X3+X4")
 
-results <- RsquareSP(XYimp, model, cor = TRUE, beta = TRUE)
+results <- RsquareSP(XYimp, model, cor = TRUE, adjusted = TRUE)
 
 results

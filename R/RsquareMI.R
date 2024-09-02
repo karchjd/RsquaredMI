@@ -1,3 +1,4 @@
+#' @export
 print.Output <- function(x) {
   cat('R-squared SP:', '\n')
   print(x$Rtotal)
@@ -50,7 +51,8 @@ RsquareSP = function(dataset,
                      model,
                      cor = FALSE,
                      conf = FALSE,
-                     alpha = 0.05){
+                     alpha = 0.05,
+                     adjusted=TRUE){
   results <- list(R_squared=NULL,R=NULL,Rtotal=NULL,Beta=NULL,Lower=NULL,Upper=NULL,Dfe=NULL,Zero=NULL,Total=NULL)
   class(results) <- "Output"
   NumberOfImp = dataset$m
@@ -123,6 +125,12 @@ RsquareSP = function(dataset,
   results$R <- sqrt(results$R_squared) 
   results$Rtotal <- c(results$R_squared, results$R)
   names(results$Rtotal) <- c("R^2","R")
+  if(adjusted){
+    results$adjusted <- altR2:::estimate_adj_R2(results$R_squared,10, 5)
+    results$Rtotal <- c(results$Rtotal, results$adjusted)
+  }
+
+
   results$beta <- meanbeta
   results$lower <- lowermeanbeta
   results$upper <- uppermeanbeta

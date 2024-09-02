@@ -4,31 +4,46 @@
 \alias{RsquareSP}
 \title{Calculate R-squared with Standardized Predictors}
 \usage{
-RsquareSP(dataset, model, beta = FALSE, cor = FALSE)
+RsquareSP(
+  dataset,
+  model,
+  cor = FALSE,
+  conf = FALSE,
+  alpha = 0.05,
+  adjusted = TRUE
+)
 }
 \arguments{
 \item{dataset}{A multiply imputed dataset of class `mids` from the `mice` package.}
 
 \item{model}{A linear model formula specifying the model to be fitted.}
 
-\item{beta}{Logical. If `TRUE`, the function returns the standardized regression coefficients. Default is `FALSE`.}
-
 \item{cor}{Logical. If `TRUE`, the function returns the zero-order correlations between the outcome and each predictor. Default is `FALSE`.}
+
+\item{conf}{Logical. If `TRUE`, the function returns the confidence intervals of the standardized regression coefficients. Default is `FALSE`.}
+
+\item{alpha}{A real number between 0 and 1 specifying the significance level of the confidence intervals. Default is `0.05`.}
 }
 \value{
 A list of class `RsquaredMI` containing the following elements:
 \item{R_squared}{The R-squared value calculated using standardized predictors.}
-\item{beta}{The standardized regression coefficients (if `beta = TRUE`).}
+\item{R}{The square root of the R-squared value, or the multiple correlation R.}
+\item{Rtotal}{A vector containing both the R-squared and R.}
+\item{beta}{The standardized regression coefficients.}
+\item{lower}{The lowerbound of the condidence intervals of the standardized regression coefficients  (if `conf = TRUE`).}
+\item{upper}{The upperbound of the condidence intervals of the standardized regression coefficients  (if `conf = TRUE`).}
+\item{dfe}{The error degrees of freedom of the condidence intervals of the standardized regression coefficients  (if `conf = TRUE`).}
 \item{zero}{The zero-order correlations between the outcome and each predictor (if `cor = TRUE`).}
 }
 \description{
-This function calculates the R-squared value for a linear model applied to a multiply imputed dataset.
-Optionally, it can also return the standardized regression coefficients and zero-order correlations.
+This function calculates the R-squared value for a linear model applied to a multiply imputed dataset, along with standardized regression coefficients.
+Optionally, it can also return the confidence intervals of the standardized regression coefficients and the zero-order correlations.
 }
 \details{
 The function first completes the imputed datasets using `mice::complete`.
 It then calculates the linear model on each imputed dataset and averages the standardized coefficients and correlations across imputations.
 The final R-squared value is computed as the sum of the products of the averaged standardized coefficients and averaged correlations.
+The confidence intervals of the standardized regression coefficients are calculated under the assumption that the variables are multivarate normally distributed
 }
 \examples{
 \dontrun{
