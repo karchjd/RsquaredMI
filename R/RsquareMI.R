@@ -62,7 +62,6 @@ RsquareSP = function(object,
     }
 #    glanced <- summary(object, type = "glance")
   }
-
   results <- list(R_squared=NULL,R=NULL,Rtotal=NULL,Beta=NULL,Lower=NULL,Upper=NULL,Dfe=NULL,Zero=NULL,Total=NULL)
   class(results) <- "Output"
   NumberOfImp = length(object$analyses)
