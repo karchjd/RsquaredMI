@@ -132,16 +132,10 @@ RsquareSP <- function(object,
   }
 
   ## pool results
-  meanbeta <- meanbeta / NumberOfImp
-  meancor <- meancor / NumberOfImp
-  Sxjsquaremean <- Sxjsquaremean / NumberOfImp
-  Sxjysquaremean <- Sxjysquaremean / NumberOfImp
-  Sysquaremean <- Sysquaremean / NumberOfImp
-  bjsquaremean <- bjsquaremean / NumberOfImp
-  bSxbmean <- bSxbmean / NumberOfImp
-  Umeanbeta <- Umeanbeta / NumberOfImp
-  cjmean <- cjmean / NumberOfImp
-  Sesquaremean <- Sesquaremean / NumberOfImp
+  vars <- c("meanbeta", "meancor", "Sxjsquaremean", "Sxjysquaremean", "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean", "Sesquaremean")
+  for (var in vars) {
+    assign(var, get(var) / NumberOfImp)
+  }
   Bmeanbeta <- matrixStats::colVars(meanbetam)
   Tmeanbeta <- Umeanbeta + (1 + 1 / NumberOfImp) * Bmeanbeta
 
@@ -168,7 +162,7 @@ RsquareSP <- function(object,
   results$total <- as.matrix(results$beta)
   Names <- "Beta"
   colnames(results$total) <- Names
-  if (conf == TRUE) {
+  if (conf) {
     results$lower <- lowermeanbeta
     results$upper <- uppermeanbeta
     results$dfe <- DFEmeanbeta
@@ -176,7 +170,7 @@ RsquareSP <- function(object,
     Names <- c(Names, "df", "Lowerbound", "Upperbound")
     colnames(results$total) <- Names
   }
-  if (cor == TRUE) {
+  if (cor) {
     results$zero <- meancor
     names(results$zero) <- predictors
     results$total <- cbind(results$total, results$zero)
