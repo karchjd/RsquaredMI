@@ -97,7 +97,7 @@ RsquareSP <- function(object,
   for (m in 1:NumberOfImp) {
     datasetm <- object$analyses[[m]]$model
     model <- object$analyses[[1]]$call
-    modelb <- lm(model, datasetm)
+    modelb <- object$analyses[[m]]
     modelbeta <- lm.beta::lm.beta(modelb)
     meanbetam[m, ] <- modelbeta$standardized.coefficients[
       2:length(modelbeta$standardized.coefficients)]
