@@ -63,7 +63,8 @@ RsquareSP <- function(object,
                       cor = FALSE,
                       conf = FALSE,
                       alpha = 0.05) {
-  #  call <- match.call()
+
+  ## input checks
   if (!is.mira(object)) {
     stop("The object must have class 'mira'")
   }
@@ -74,8 +75,9 @@ RsquareSP <- function(object,
     if (class((object$analyses[[1]]))[1] != "lm") {
       stop("r^2 can only be calculated for results of the 'lm' modeling function")
     }
-    #    glanced <- summary(object, type = "glance")
   }
+
+  ## init variables
   results <- list(R_squared = NULL, R = NULL, Rtotal = NULL, Beta = NULL,
                   Lower = NULL, Upper = NULL, Dfe = NULL, Zero = NULL,
                   Total = NULL)
@@ -86,10 +88,12 @@ RsquareSP <- function(object,
   vars <- colnames(datasetm)
   outcome <- vars[1]
   predictors <- vars[2:length(vars)]
-  meanbeta <- meancor <- SDX <- Umeanbeta <- cjmean <- Sxjsquaremean <-
+  meanbeta <- meancor <- Umeanbeta <- cjmean <- Sxjsquaremean <-
     Sxjysquaremean <- rep(0, times = length(predictors))
-  SDY <- Sesquaremean <- bjsquaremean <- bSxbmean <- Sysquaremean <- 0
+  Sesquaremean <- bjsquaremean <- bSxbmean <- Sysquaremean <- 0
   meanbetam <- matrix(0, NumberOfImp, length(predictors))
+
+  ## main loop
   for (m in 1:NumberOfImp) {
     datasetm <- object$analyses[[m]]$model
     model <- object$analyses[[1]]$call
@@ -126,6 +130,8 @@ RsquareSP <- function(object,
     SEb <- SEb[2:length(SEb)]
     Umeanbeta <- Umeanbeta + SEbeta^2
   }
+
+  ## pool results
   meanbeta <- meanbeta / NumberOfImp
   meancor <- meancor / NumberOfImp
   Sxjsquaremean <- Sxjsquaremean / NumberOfImp
@@ -139,7 +145,7 @@ RsquareSP <- function(object,
   Bmeanbeta <- matrixStats::colVars(meanbetam)
   Tmeanbeta <- Umeanbeta + (1 + 1 / NumberOfImp) * Bmeanbeta
 
-  # CALCULATING DEGREES OF FREEDOM (REITER, 2007)
+  ## CALCULATING DEGREES OF FREEDOM (REITER, 2007)
   vcom <- ((DFE + 1) / (DFE + 3)) * DFE
   gammameanbeta <- (1 + 1 / NumberOfImp) * Bmeanbeta / Tmeanbeta
   vmmeanbeta <- (NumberOfImp - 1) * gammameanbeta^(-2)
@@ -149,6 +155,7 @@ RsquareSP <- function(object,
   lowermeanbeta <- meanbeta + qt(alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
   uppermeanbeta <- meanbeta + qt(1 - alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
 
+  ## propagate results
   results$R_squared <- sum(meanbeta * meancor)
   results$R <- sqrt(results$R_squared)
   results$Rtotal <- c(results$R_squared, results$R)
