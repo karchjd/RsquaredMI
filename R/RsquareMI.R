@@ -6,6 +6,10 @@ print.RsquaredPooled <- function(x) {
   cat("Beta Coefficients SP:", "\n")
   print(x$total)
   cat("\n")
+  if(!is.null(x$zero)){
+    cat("Zero Order Correlations", "\n")
+    print(x$zero)
+  }
 }
 #' Calculate R-squared with Standardized Predictors
 #'
@@ -133,7 +137,9 @@ RsquareSP <- function(object,
   }
 
   ## pool results
-  vars <- c("meanbeta", "meancor", "Sxjsquaremean", "Sxjysquaremean", "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean", "Sesquaremean")
+  vars <- c("meanbeta", "meancor", "Sxjsquaremean", "Sxjysquaremean",
+            "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean",
+            "Sesquaremean")
   for (var in vars) {
     assign(var, get(var) / NumberOfImp)
   }
