@@ -1,4 +1,5 @@
-print.Output <- function(x) {
+#' @export
+print.RsquaredPooled <- function(x) {
   cat("R-squared SP:", "\n")
   print(x$Rtotal)
   cat("\n")
@@ -81,7 +82,7 @@ RsquareSP <- function(object,
   results <- list(R_squared = NULL, R = NULL, Rtotal = NULL, Beta = NULL,
                   Lower = NULL, Upper = NULL, Dfe = NULL, Zero = NULL,
                   Total = NULL)
-  class(results) <- "Output"
+  class(results) <- "RsquaredPooled"
   NumberOfImp <- length(object$analyses)
   datasetm <- object$analyses[[1]]$model
   DFE <- object$analyses[[1]]$df.residual
