@@ -11,8 +11,7 @@ print.Output <- function(x) {
 #' This function calculates the R-squared value for a linear model applied to a multiply imputed dataset, along with standardized regression coefficients.
 #' Optionally, it can also return the confidence intervals of the standardized regression coefficients and the zero-order correlations.
 #'
-#' @param dataset A multiply imputed dataset of class `mids` from the `mice` package.
-#' @param model A linear model formula specifying the model to be fitted.
+#' @param object The results of a regression on a multiply imputed dataset of class `mira` from the `mice` package.
 #' @param conf Logical. If `TRUE`, the function returns the confidence intervals of the standardized regression coefficients. Default is `FALSE`.
 #' @param cor Logical. If `TRUE`, the function returns the zero-order correlations between the outcome and each predictor. Default is `FALSE`.
 #' @param alpha A real number between 0 and 1 specifying the significance level of the confidence intervals. Default is `0.05`.
@@ -46,24 +45,38 @@ print.Output <- function(x) {
 #' }
 #'
 #' @export
-RsquareSP = function(dataset,
-                     model,
+RsquareSP = function(object,
                      cor = FALSE,
                      conf = FALSE,
                      alpha = 0.05){
+#  call <- match.call()
+  if (!is.mira(object)) {
+    stop("The object must have class 'mira'")
+  }
+  if (is.mira(object)) {
+    if ((m <- length(object$analyses)) < 2) {
+      stop("At least two imputations are needed for pooling.\n")
+    }
+    if (class((object$analyses[[1]]))[1] != "lm") {
+      stop("r^2 can only be calculated for results of the 'lm' modeling function")
+    }
+#    glanced <- summary(object, type = "glance")
+  }
+
   results <- list(R_squared=NULL,R=NULL,Rtotal=NULL,Beta=NULL,Lower=NULL,Upper=NULL,Dfe=NULL,Zero=NULL,Total=NULL)
   class(results) <- "Output"
-  NumberOfImp = dataset$m
-  dataset <- mice::complete(dataset, "long", inc = TRUE)
-  modeltemp <- lm(model,dataset)
-  vars <- names(modeltemp$model)
+  NumberOfImp = length(object$analyses)
+  datasetm <- object$analyses[[1]]$model
+  DFE <- object$analyses[[1]]$df.residual
+  vars <- colnames(datasetm)
   outcome <- vars[1]
   predictors <- vars[2:length(vars)]
   meanbeta <- meancor <- SDX <- Umeanbeta <- cjmean <- Sxjsquaremean <- Sxjysquaremean <- rep(0, times=length(predictors))
   SDY <- Sesquaremean <- bjsquaremean <- bSxbmean <- Sysquaremean <- 0
   meanbetam = matrix(0,NumberOfImp,length(predictors))
   for (m in 1:NumberOfImp){    
-    datasetm <- dataset[dataset[,1]==m,vars]
+    datasetm <- object$analyses[[m]]$model
+    model = object$analyses[[1]]$call
     modelb <- lm(model,datasetm)
     modelbeta <- lm.beta::lm.beta(modelb)
     meanbetam[m,] <- modelbeta$standardized.coefficients[2:length(modelbeta$standardized.coefficients)]
@@ -79,7 +92,6 @@ RsquareSP = function(dataset,
     Sxjsquaremean <- Sxjsquaremean + Sxjsquare
     Sxjysquare <- covxy[1,2:ncol(covxy)]
     Sxjysquaremean <- Sxjysquaremean + Sxjysquare
-    DFE <- nrow(datasetm) - length(predictors) - 1
     Sesquare <- as.vector((t(modelb$residuals)%*%modelb$residuals)/DFE)
     Sesquaremean <- Sesquaremean + Sesquare
     Sysquare <- var(datasetm[,outcome])
