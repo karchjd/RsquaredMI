@@ -1,15 +1,10 @@
 #' @export
 print.RsquaredPooled <- function(x) {
   cat("R-squared SP:", "\n")
-  print(x$Rtotal)
+  print(x$rtotal)
   cat("\n")
   cat("Beta Coefficients SP:", "\n")
   print(x$total)
-  cat("\n")
-  if(!is.null(x$zero)){
-    cat("Zero Order Correlations", "\n")
-    print(x$zero)
-  }
 }
 #' Calculate R-squared with Standardized Predictors
 #'
@@ -28,9 +23,9 @@ print.RsquaredPooled <- function(x) {
 #' of the confidence intervals. Default is `0.05`.
 #'
 #' @return A list of class `RsquaredMI` containing the following elements:
-#' \item{R_squared}{The R-squared value calculated using standardized predictors.}
-#' \item{R}{The square root of the R-squared value, or the multiple correlation R.}
-#' \item{Rtotal}{A vector containing both the R-squared and R.}
+#' \item{r_squared}{The R-squared value calculated using standardized predictors.}
+#' \item{r}{The square root of the R-squared value, or the multiple correlation R.}
+#' \item{rtotal}{A vector containing both the R-squared and R.}
 #' \item{beta}{The standardized regression coefficients.}
 #' \item{lower}{The lowerbound of the condidence intervals of the standardized
 #' regression coefficients  (if `conf = TRUE`).}
@@ -39,6 +34,8 @@ print.RsquaredPooled <- function(x) {
 #' \item{dfe}{The error degrees of freedom of the condidence intervals of
 #' the standardized regression coefficients  (if `conf = TRUE`).}
 #' \item{zero}{The zero-order correlations between the outcome and each
+#' \item{total}{A matrix containing the betas and optionally, the error degrees of 
+#' freedom, confidence intervals, and zero-order correlations.}
 #' predictor (if `cor = TRUE`).}
 #'
 #' @details The function first completes the imputed datasets using `mice::complete`.
@@ -58,9 +55,8 @@ print.RsquaredPooled <- function(x) {
 #' # Assuming `imp` is a multiply imputed dataset from `mice`
 #' model <- as.formula(y ~ x1 + x2)
 #' result <- RsquareSP(dataset = imp, model = model, beta = TRUE, cor = TRUE)
-#' print(result$R_squared)
-#' print(result$beta)
-#' print(result$zero)
+#' print(result$rtotal)
+#' print(result$total)
 #' }
 #'
 #' @export
@@ -68,7 +64,6 @@ RsquareSP <- function(object,
                       cor = FALSE,
                       conf = FALSE,
                       alpha = 0.05) {
-
   ## input checks
   if (!is.mira(object)) {
     stop("The object must have class 'mira'")
@@ -81,11 +76,10 @@ RsquareSP <- function(object,
       stop("r^2 can only be calculated for results of the 'lm' modeling function")
     }
   }
-
   ## init variables
-  results <- list(R_squared = NULL, R = NULL, Rtotal = NULL, Beta = NULL,
-                  Lower = NULL, Upper = NULL, Dfe = NULL, Zero = NULL,
-                  Total = NULL)
+  results <- list(r_squared = NULL, r = NULL, rtotal = NULL, beta = NULL,
+                  lower = NULL, upper = NULL, dfe = NULL, zero = NULL,
+                  total = NULL)
   class(results) <- "RsquaredPooled"
   NumberOfImp <- length(object$analyses)
   datasetm <- object$analyses[[1]]$model
@@ -97,7 +91,6 @@ RsquareSP <- function(object,
     Sxjysquaremean <- rep(0, times = length(predictors))
   Sesquaremean <- bjsquaremean <- bSxbmean <- Sysquaremean <- 0
   meanbetam <- matrix(0, NumberOfImp, length(predictors))
-
   ## main loop
   for (m in 1:NumberOfImp) {
     datasetm <- object$analyses[[m]]$model
@@ -108,12 +101,10 @@ RsquareSP <- function(object,
       2:length(modelbeta$standardized.coefficients)]
     meanbeta <- meanbeta + meanbetam[m, ]
     meancor <- meancor + cor(datasetm)[1, 2:ncol(datasetm)]
-
     # CALCULATING BETA SES
     covxy <- cov(datasetm)
     cj <- diag(solve(covxy[predictors, predictors]))
     cjmean <- cjmean + cj
-
     Sxjsquare <- diag(covxy)[predictors]
     Sxjsquaremean <- Sxjsquaremean + Sxjsquare
     Sxjysquare <- covxy[1, 2:ncol(covxy)]
@@ -137,6 +128,7 @@ RsquareSP <- function(object,
   }
 
   ## pool results
+  vars <- c("meanbeta", "meancor", "Sxjsquaremean", "Sxjysquaremean", "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean", "Sesquaremean")
   vars <- c("meanbeta", "meancor", "Sxjsquaremean", "Sxjysquaremean",
             "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean",
             "Sesquaremean")
@@ -145,22 +137,19 @@ RsquareSP <- function(object,
   }
   Bmeanbeta <- matrixStats::colVars(meanbetam)
   Tmeanbeta <- Umeanbeta + (1 + 1 / NumberOfImp) * Bmeanbeta
-
   ## CALCULATING DEGREES OF FREEDOM (REITER, 2007)
   vcom <- ((DFE + 1) / (DFE + 3)) * DFE
   gammameanbeta <- (1 + 1 / NumberOfImp) * Bmeanbeta / Tmeanbeta
   vmmeanbeta <- (NumberOfImp - 1) * gammameanbeta^(-2)
   vobsmeanbeta <- (1 - gammameanbeta) * vcom
   DFEmeanbeta <- (1 / vmmeanbeta + 1 / vobsmeanbeta)^(-1)
-
   lowermeanbeta <- meanbeta + qt(alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
   uppermeanbeta <- meanbeta + qt(1 - alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
-
   ## propagate results
-  results$R_squared <- sum(meanbeta * meancor)
-  results$R <- sqrt(results$R_squared)
-  results$Rtotal <- c(results$R_squared, results$R)
-  names(results$Rtotal) <- c("R^2", "R")
+  results$r_squared <- sum(meanbeta * meancor)
+  results$r <- sqrt(results$r_squared)
+  results$rtotal <- c(results$r_squared, results$r)
+  names(results$rtotal) <- c("R^2", "R")
   results$beta <- meanbeta
   results$lower <- lowermeanbeta
   results$upper <- uppermeanbeta
