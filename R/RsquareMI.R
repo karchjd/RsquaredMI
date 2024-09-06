@@ -128,7 +128,6 @@ RsquareSP <- function(object,
   }
 
   ## pool results
-  vars <- c("meanbeta", "meancor", "Sxjsquaremean", "Sxjysquaremean", "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean", "Sesquaremean")
   vars <- c("meanbeta", "meancor", "Sxjsquaremean", "Sxjysquaremean",
             "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean",
             "Sesquaremean")
