@@ -13,6 +13,7 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports: 
+    altR2 (>= 1.1.0),
     lm.beta,
     mice
 RoxygenNote: 7.3.2

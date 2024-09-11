@@ -5,6 +5,11 @@ print.RsquaredPooled <- function(x) {
   cat("\n")
   cat("Beta Coefficients SP:", "\n")
   print(x$total)
+  if(!is.null(x$alternative_adj_R2)){
+    cat("\n")
+    cat("Altnative adjusted R^2 estimates:", "\n")
+    print(x$alternative_adj_R2)
+  }
 }
 #' Calculate R-squared with Standardized Predictors
 #'
@@ -21,7 +26,8 @@ print.RsquaredPooled <- function(x) {
 #' correlations between the outcome and each predictor. Default is `FALSE`.
 #' @param alpha A real number between 0 and 1 specifying the significance level
 #' of the confidence intervals. Default is `0.05`.
-#'
+#' @param alternative_adj_R2 Logical. If `TRUE`, the function returns alternative
+#' estimates of adjusted R^2, as described in the references
 #' @return A list of class `RsquaredMI` containing the following elements:
 #' \item{r_squared}{The R-squared value calculated using standardized predictors.}
 #' \item{r}{The square root of the R-squared value, or the multiple correlation R.}
@@ -63,7 +69,8 @@ print.RsquaredPooled <- function(x) {
 RsquareSP <- function(object,
                       cor = FALSE,
                       conf = FALSE,
-                      alpha = 0.05) {
+                      alpha = 0.05,
+                      alternative_adj_R2 = FALSE) {
   ## input checks
   if (!is.mira(object)) {
     stop("The object must have class 'mira'")
@@ -144,11 +151,28 @@ RsquareSP <- function(object,
   DFEmeanbeta <- (1 / vmmeanbeta + 1 / vobsmeanbeta)^(-1)
   lowermeanbeta <- meanbeta + qt(alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
   uppermeanbeta <- meanbeta + qt(1 - alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
+
+  ### adjusted stuff
+  r_squared <- sum(meanbeta * meancor)
+  N <- nrow(datasetm)
+  p <- ncol(datasetm)-1
+  if(alternative_adj_R2){
+    alt_adjusted_rs <- altR2::estimate_adj_R2(r_squared, N = nrow(datasetm), p = ncol(datasetm)-1)
+    r_adj <- alt_adjusted_rs["Ezekiel"]
+    alt_adjusted_rs <- alt_adjusted_rs[c("Olkin_Pratt_Exact", "Pratt", "Claudy",
+                                         "Wherry", "Smith", "Maximum_Likelihood",
+                                         "Olkin_Pratt_K_1", "Olkin_Pratt_K_2",
+                                         "Olkin_Pratt_K_5")]
+  }else{
+    r_adj <- 1 - (N - 1)/(N - p - 1) * (1 - r_squared)
+  }
+
   ## propagate results
-  results$r_squared <- sum(meanbeta * meancor)
+  results$r_squared <- r_squared
   results$r <- sqrt(results$r_squared)
-  results$rtotal <- c(results$r_squared, results$r)
-  names(results$rtotal) <- c("R^2", "R")
+  results$r_adj <- r_adj
+  results$rtotal <- c(results$r_squared, results$r, results$r_adj)
+  names(results$rtotal) <- c("R^2", "R", "adj. R^2")
   results$beta <- meanbeta
   results$lower <- lowermeanbeta
   results$upper <- uppermeanbeta
@@ -170,6 +194,10 @@ RsquareSP <- function(object,
     names(results$zero) <- predictors
     results$total <- cbind(results$total, results$zero)
     colnames(results$total) <- c(Names, "Zero Order")
+  }
+
+  if(alternative_adj_R2){
+    results$alternative_adj_R2 <- alt_adjusted_rs
   }
   return(results)
 }
