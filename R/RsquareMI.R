@@ -95,7 +95,7 @@ RsquareSP <- function(object,
   outcome <- vars[1]
   predictors <- vars[2:length(vars)]
   meanbeta <- meancor <- Umeanbeta <- cjmean <- Sxjsquaremean <-
-    Sxjysquaremean <- rep(0, times = length(predictors))
+  Sxjysquaremean <- rep(0, times = length(predictors))
   Sesquaremean <- bjsquaremean <- bSxbmean <- Sysquaremean <- 0
   meanbetam <- matrix(0, NumberOfImp, length(predictors))
   ## main loop
@@ -168,15 +168,14 @@ RsquareSP <- function(object,
   }
 
   ## propagate results
+  ### rsquared and relatives
   results$r_squared <- r_squared
   results$r <- sqrt(results$r_squared)
   results$r_adj <- r_adj
   results$rtotal <- c(results$r_squared, results$r, results$r_adj)
   names(results$rtotal) <- c("R^2", "R", "adj. R^2")
+  ## beta coefs
   results$beta <- meanbeta
-  results$lower <- lowermeanbeta
-  results$upper <- uppermeanbeta
-  results$dfe <- DFEmeanbeta
   names(results$beta) <- predictors
   results$total <- as.matrix(results$beta)
   Names <- "Beta"
