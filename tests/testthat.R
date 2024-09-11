@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(RSquredMI)
+library(RSquaredMI)
 
-test_check("RSquredMI")
+test_check("RSquaredMI")

@@ -61,13 +61,10 @@ calculated under the assumption that the variables are multivarate normally
 distributed
 }
 \examples{
-\dontrun{
-# Assuming `imp` is a multiply imputed dataset from `mice`
-model <- as.formula(y ~ x1 + x2)
-result <- RsquareSP(dataset = imp, model = model, beta = TRUE, cor = TRUE)
-print(result$rtotal)
-print(result$total)
-}
+library(mice)
+imp <- mice(nhanes, print = FALSE, seed = 16117)
+fit <- with(imp, lm(chl ~ age + hyp + bmi))
+RsquareSP(fit)
 }
 \references{
 Van Ginkel, J. R., & Karch, J.D. (2024). A comparison of different measures of

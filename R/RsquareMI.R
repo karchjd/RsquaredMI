@@ -1,5 +1,5 @@
 #' @export
-print.RsquaredPooled <- function(x) {
+print.RsquaredPooled <- function(x, ...) {
   cat("R-squared SP:", "\n")
   print(x$rtotal)
   cat("\n")
@@ -57,13 +57,10 @@ print.RsquaredPooled <- function(x) {
 #' @importFrom lm.beta lm.beta
 #'
 #' @examples
-#' \dontrun{
-#' # Assuming `imp` is a multiply imputed dataset from `mice`
-#' model <- as.formula(y ~ x1 + x2)
-#' result <- RsquareSP(dataset = imp, model = model, beta = TRUE, cor = TRUE)
-#' print(result$rtotal)
-#' print(result$total)
-#' }
+#' library(mice)
+#' imp <- mice(nhanes, print = FALSE, seed = 16117)
+#' fit <- with(imp, lm(chl ~ age + hyp + bmi))
+#' RsquareSP(fit)
 #' @references
 #' Van Ginkel, J. R., & Karch, J.D. (2024). A comparison of different measures of
 #' the proportion of explained variance in multiply imputed data sets.
@@ -119,7 +116,7 @@ RsquareSP <- function(object,
     meanbeta <- meanbeta + meanbetam[m, ]
     meancor <- meancor + cor(datasetm)[1, 2:ncol(datasetm)]
     # CALCULATING BETA SES
-    covxy <- cov(datasetm)
+    covxy <- stats::cov(datasetm)
     cj <- diag(solve(covxy[predictors, predictors]))
     cjmean <- cjmean + cj
     Sxjsquare <- diag(covxy)[predictors]
@@ -139,7 +136,7 @@ RsquareSP <- function(object,
     SEbeta <- sqrt((Sxjsquare * cj * Sesquare) / ((nrow(datasetm) - 3) * Sysquare) +
       (bjsquare * (Sxjsquare * as.vector(bSxb) - Sxjsquare * Sesquare - Sxjysquare)) /
         ((nrow(datasetm) - 3) * (sqrt(Sysquare))^4))
-    SEb <- sqrt(diag(vcov(modelb)))
+    SEb <- sqrt(diag(stats::vcov(modelb)))
     SEb <- SEb[2:length(SEb)]
     Umeanbeta <- Umeanbeta + SEbeta^2
   }
@@ -161,8 +158,8 @@ RsquareSP <- function(object,
   vmmeanbeta <- (NumberOfImp - 1) * gammameanbeta^(-2)
   vobsmeanbeta <- (1 - gammameanbeta) * vcom
   DFEmeanbeta <- (1 / vmmeanbeta + 1 / vobsmeanbeta)^(-1)
-  lowermeanbeta <- meanbeta + qt(alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
-  uppermeanbeta <- meanbeta + qt(1 - alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
+  lowermeanbeta <- meanbeta + stats::qt(alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
+  uppermeanbeta <- meanbeta + stats::qt(1 - alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
 
   ### adjusted stuff
   r_squared <- sum(meanbeta * meancor)
