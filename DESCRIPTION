@@ -1,11 +1,20 @@
 Package: RSquaredMI
 Type: Package
-Title: What the Package Does (Title Case)
+Title: R-Squared with Multiply Imputed Data
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Authors@R: 
+    person(c("Julian",  "D."), "Karch",
+    email = "j.d.karch@fsw.leidenuniv.nl", 
+    role = c("aut", "cre", "cph"),
+    comment = c(ORCID = "0000-0002-1625-2822")),
+    person("Joost", "van Ginkel",
+    email = "jginkel@fsw.leidenuniv.nl", 
+    role = c("aut", "cre", "cph"),
+    comment = c(ORCID = "XXX"))
+Description: This package calculates R-squared values and standardized regression
+    coefficients for linear models applied to multiply imputed datasets as obtained by 'mice'. 
+    It offers  confidence intervals, zero-order correlations, and alternative adjusted R-squared 
+    estimates. The methods are described in Van Ginkel and Karch (2024) <doi: 10.1111/bmsp.12344>
 License: AGPL (>= 3)
 Encoding: UTF-8
 LazyData: true

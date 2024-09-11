@@ -64,7 +64,13 @@ print.RsquaredPooled <- function(x) {
 #' print(result$rtotal)
 #' print(result$total)
 #' }
+#' @references
+#' Van Ginkel, J. R., & Karch, J.D. (2024). A comparison of different measures of
+#' the proportion of explained variance in multiply imputed data sets.
+#' British Journal of Mathematical and Statistical Psychology. \href{https://doi.org/10.1111/bmsp.12344}{https://doi.org/10.1111/bmsp.12344}
 #'
+#' Karch, J.D. (2024). Improving on Adjusted R-squared. Collabra: Psychology. \href{https://doi.org/10.1525/collabra.343}{https://doi.org/10.1525/collabra.343}
+
 #' @export
 RsquareSP <- function(object,
                       cor = FALSE,

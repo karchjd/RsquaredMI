@@ -8,7 +8,7 @@ RsquareSP(
   object,
   cor = FALSE,
   conf = FALSE,
-  alpha = 0.05,
+  conf.level = 0.95,
   alternative_adj_R2 = FALSE
 )
 }
@@ -17,13 +17,13 @@ RsquareSP(
 class `mira` from the `mice` package.}
 
 \item{cor}{Logical. If `TRUE`, the function returns the zero-order
-correlations between the outcome and each predictor. Default is `FALSE`.}
+correlations between the outcome and each predictor.}
 
 \item{conf}{Logical. If `TRUE`, the function returns the confidence intervals
-of the standardized regression coefficients. Default is `FALSE`.}
+of the standardized regression coefficients.}
 
-\item{alpha}{A real number between 0 and 1 specifying the significance level
-of the confidence intervals. Default is `0.05`.}
+\item{conf.level}{A real number between 0 and 1 specifying the confidence level
+of the confidence intervals.}
 
 \item{alternative_adj_R2}{Logical. If `TRUE`, the function returns alternative
 estimates of adjusted R^2, as described in the references}
@@ -41,7 +41,7 @@ regression coefficients  (if `conf = TRUE`).}
 \item{dfe}{The error degrees of freedom of the condidence intervals of
 the standardized regression coefficients  (if `conf = TRUE`).}
 \item{zero}{The zero-order correlations between the outcome and each
-\item{total}{A matrix containing the betas and optionally, the error degrees of 
+\item{total}{A matrix containing the betas and optionally, the error degrees of
 freedom, confidence intervals, and zero-order correlations.}
 predictor (if `cor = TRUE`).}
 }
@@ -69,5 +69,11 @@ result <- RsquareSP(dataset = imp, model = model, beta = TRUE, cor = TRUE)
 print(result$rtotal)
 print(result$total)
 }
+}
+\references{
+Van Ginkel, J. R., & Karch, J.D. (2024). A comparison of different measures of
+the proportion of explained variance in multiply imputed data sets.
+British Journal of Mathematical and Statistical Psychology. \href{https://doi.org/10.1111/bmsp.12344}{https://doi.org/10.1111/bmsp.12344}
 
+Karch, J.D. (2024). Improving on Adjusted R-squared. Collabra: Psychology. \href{https://doi.org/10.1525/collabra.343}{https://doi.org/10.1525/collabra.343}
 }
