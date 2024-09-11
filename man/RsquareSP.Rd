@@ -4,7 +4,13 @@
 \alias{RsquareSP}
 \title{Calculate R-squared with Standardized Predictors}
 \usage{
-RsquareSP(object, cor = FALSE, conf = FALSE, alpha = 0.05)
+RsquareSP(
+  object,
+  cor = FALSE,
+  conf = FALSE,
+  alpha = 0.05,
+  alternative_adj_R2 = FALSE
+)
 }
 \arguments{
 \item{object}{The results of a regression on a multiply imputed dataset of
@@ -18,12 +24,15 @@ of the standardized regression coefficients. Default is `FALSE`.}
 
 \item{alpha}{A real number between 0 and 1 specifying the significance level
 of the confidence intervals. Default is `0.05`.}
+
+\item{alternative_adj_R2}{Logical. If `TRUE`, the function returns alternative
+estimates of adjusted R^2, as described in the references}
 }
 \value{
 A list of class `RsquaredMI` containing the following elements:
-\item{R_squared}{The R-squared value calculated using standardized predictors.}
-\item{R}{The square root of the R-squared value, or the multiple correlation R.}
-\item{Rtotal}{A vector containing both the R-squared and R.}
+\item{r_squared}{The R-squared value calculated using standardized predictors.}
+\item{r}{The square root of the R-squared value, or the multiple correlation R.}
+\item{rtotal}{A vector containing both the R-squared and R.}
 \item{beta}{The standardized regression coefficients.}
 \item{lower}{The lowerbound of the condidence intervals of the standardized
 regression coefficients  (if `conf = TRUE`).}
@@ -32,6 +41,8 @@ regression coefficients  (if `conf = TRUE`).}
 \item{dfe}{The error degrees of freedom of the condidence intervals of
 the standardized regression coefficients  (if `conf = TRUE`).}
 \item{zero}{The zero-order correlations between the outcome and each
+\item{total}{A matrix containing the betas and optionally, the error degrees of 
+freedom, confidence intervals, and zero-order correlations.}
 predictor (if `cor = TRUE`).}
 }
 \description{
@@ -55,9 +66,8 @@ distributed
 # Assuming `imp` is a multiply imputed dataset from `mice`
 model <- as.formula(y ~ x1 + x2)
 result <- RsquareSP(dataset = imp, model = model, beta = TRUE, cor = TRUE)
-print(result$R_squared)
-print(result$beta)
-print(result$zero)
+print(result$rtotal)
+print(result$total)
 }
 
 }

@@ -5,7 +5,7 @@ print.RsquaredPooled <- function(x) {
   cat("\n")
   cat("Beta Coefficients SP:", "\n")
   print(x$total)
-  if(!is.null(x$alternative_adj_R2)){
+  if (!is.null(x$alternative_adj_R2)) {
     cat("\n")
     cat("Altnative adjusted R^2 estimates:", "\n")
     print(x$alternative_adj_R2)
@@ -21,11 +21,11 @@ print.RsquaredPooled <- function(x) {
 #' @param object The results of a regression on a multiply imputed dataset of
 #' class `mira` from the `mice` package.
 #' @param conf Logical. If `TRUE`, the function returns the confidence intervals
-#' of the standardized regression coefficients. Default is `FALSE`.
+#' of the standardized regression coefficients.
 #' @param cor Logical. If `TRUE`, the function returns the zero-order
-#' correlations between the outcome and each predictor. Default is `FALSE`.
-#' @param alpha A real number between 0 and 1 specifying the significance level
-#' of the confidence intervals. Default is `0.05`.
+#' correlations between the outcome and each predictor.
+#' @param conf.level A real number between 0 and 1 specifying the confidence level
+#' of the confidence intervals.
 #' @param alternative_adj_R2 Logical. If `TRUE`, the function returns alternative
 #' estimates of adjusted R^2, as described in the references
 #' @return A list of class `RsquaredMI` containing the following elements:
@@ -40,7 +40,7 @@ print.RsquaredPooled <- function(x) {
 #' \item{dfe}{The error degrees of freedom of the condidence intervals of
 #' the standardized regression coefficients  (if `conf = TRUE`).}
 #' \item{zero}{The zero-order correlations between the outcome and each
-#' \item{total}{A matrix containing the betas and optionally, the error degrees of 
+#' \item{total}{A matrix containing the betas and optionally, the error degrees of
 #' freedom, confidence intervals, and zero-order correlations.}
 #' predictor (if `cor = TRUE`).}
 #'
@@ -69,7 +69,7 @@ print.RsquaredPooled <- function(x) {
 RsquareSP <- function(object,
                       cor = FALSE,
                       conf = FALSE,
-                      alpha = 0.05,
+                      conf.level = 0.95,
                       alternative_adj_R2 = FALSE) {
   ## input checks
   if (!is.mira(object)) {
@@ -83,10 +83,13 @@ RsquareSP <- function(object,
       stop("r^2 can only be calculated for results of the 'lm' modeling function")
     }
   }
+  alpha <- 1 - conf.level
   ## init variables
-  results <- list(r_squared = NULL, r = NULL, rtotal = NULL, beta = NULL,
-                  lower = NULL, upper = NULL, dfe = NULL, zero = NULL,
-                  total = NULL)
+  results <- list(
+    r_squared = NULL, r = NULL, rtotal = NULL, beta = NULL,
+    lower = NULL, upper = NULL, dfe = NULL, zero = NULL,
+    total = NULL
+  )
   class(results) <- "RsquaredPooled"
   NumberOfImp <- length(object$analyses)
   datasetm <- object$analyses[[1]]$model
@@ -95,7 +98,7 @@ RsquareSP <- function(object,
   outcome <- vars[1]
   predictors <- vars[2:length(vars)]
   meanbeta <- meancor <- Umeanbeta <- cjmean <- Sxjsquaremean <-
-  Sxjysquaremean <- rep(0, times = length(predictors))
+    Sxjysquaremean <- rep(0, times = length(predictors))
   Sesquaremean <- bjsquaremean <- bSxbmean <- Sysquaremean <- 0
   meanbetam <- matrix(0, NumberOfImp, length(predictors))
   ## main loop
@@ -105,7 +108,8 @@ RsquareSP <- function(object,
     modelb <- object$analyses[[m]]
     modelbeta <- lm.beta::lm.beta(modelb)
     meanbetam[m, ] <- modelbeta$standardized.coefficients[
-      2:length(modelbeta$standardized.coefficients)]
+      2:length(modelbeta$standardized.coefficients)
+    ]
     meanbeta <- meanbeta + meanbetam[m, ]
     meancor <- meancor + cor(datasetm)[1, 2:ncol(datasetm)]
     # CALCULATING BETA SES
@@ -135,9 +139,11 @@ RsquareSP <- function(object,
   }
 
   ## pool results
-  vars <- c("meanbeta", "meancor", "Sxjsquaremean", "Sxjysquaremean",
-            "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean",
-            "Sesquaremean")
+  vars <- c(
+    "meanbeta", "meancor", "Sxjsquaremean", "Sxjysquaremean",
+    "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean",
+    "Sesquaremean"
+  )
   for (var in vars) {
     assign(var, get(var) / NumberOfImp)
   }
@@ -155,16 +161,18 @@ RsquareSP <- function(object,
   ### adjusted stuff
   r_squared <- sum(meanbeta * meancor)
   N <- nrow(datasetm)
-  p <- ncol(datasetm)-1
-  if(alternative_adj_R2){
-    alt_adjusted_rs <- altR2::estimate_adj_R2(r_squared, N = nrow(datasetm), p = ncol(datasetm)-1)
+  p <- ncol(datasetm) - 1
+  if (alternative_adj_R2) {
+    alt_adjusted_rs <- altR2::estimate_adj_R2(r_squared, N = nrow(datasetm), p = ncol(datasetm) - 1)
     r_adj <- alt_adjusted_rs["Ezekiel"]
-    alt_adjusted_rs <- alt_adjusted_rs[c("Olkin_Pratt_Exact", "Pratt", "Claudy",
-                                         "Wherry", "Smith", "Maximum_Likelihood",
-                                         "Olkin_Pratt_K_1", "Olkin_Pratt_K_2",
-                                         "Olkin_Pratt_K_5")]
-  }else{
-    r_adj <- 1 - (N - 1)/(N - p - 1) * (1 - r_squared)
+    alt_adjusted_rs <- alt_adjusted_rs[c(
+      "Olkin_Pratt_Exact", "Pratt", "Claudy",
+      "Wherry", "Smith", "Maximum_Likelihood",
+      "Olkin_Pratt_K_1", "Olkin_Pratt_K_2",
+      "Olkin_Pratt_K_5"
+    )]
+  } else {
+    r_adj <- 1 - (N - 1) / (N - p - 1) * (1 - r_squared)
   }
 
   ## propagate results
@@ -195,7 +203,7 @@ RsquareSP <- function(object,
     colnames(results$total) <- c(Names, "Zero Order")
   }
 
-  if(alternative_adj_R2){
+  if (alternative_adj_R2) {
     results$alternative_adj_R2 <- alt_adjusted_rs
   }
   return(results)

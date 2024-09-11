@@ -1,0 +1,89 @@
+check_numbers <- function(res, exp) {
+  expect_equal(res, exp, ignore_attr = TRUE)
+}
+
+check_normal_res <- function(res) {
+  check_numbers(res$rtotal, c(0.42250072, 0.65000055, 0.34000082))
+  check_numbers(res$total[, "Beta"], c(0.58470893, 0.02098065, 0.56689497))
+}
+
+check_cor <- function(res) {
+  check_numbers(res$total[, "Zero Order"], c(0.38055967, 0.32691257, 0.34067199))
+}
+
+check_df <- function(res) {
+  check_numbers(res$total[, "df"], c(10.0132074, 17.8762882, 10.7091772))
+}
+
+check_conf <- function(res) {
+  check_numbers(res$total[, "Lowerbound"], c(0.01044635, -0.42610359, 0.07355896))
+  check_numbers(res$total[, "Upperbound"], c(1.1589715, 0.4680649, 1.0602310))
+}
+
+check_conf_90 <- function(res) {
+  check_numbers(res$total[, "Lowerbound"], c(0.1175587887822, -0.3479899966129, 0.1646934226470))
+  check_numbers(res$total[, "Upperbound"], c(1.0518590698629, 0.3899513041215, 0.9690965223859))
+}
+
+check_alternatives <- function(res) {
+  check_numbers(
+    res$alternative_adj_R2,
+    c(
+      0.3613807710744, 0.3595300248822, 0.3886422964785, 0.3700007801723,
+      0.3437508126795, 0.3586601016493, 0.3646193027210, 0.3618120605415,
+      0.3613837129718
+    )
+  )
+}
+
+test_that("normal run", {
+  res <- RsquareSP(fit)
+  check_normal_res(res)
+  # TODO after change: add checks for other results being absent
+})
+
+test_that("cor true", {
+  res <- RsquareSP(fit, cor = TRUE)
+  check_normal_res(res)
+  check_cor(res)
+  # TODO after change: add checks for other results being absent
+})
+
+test_that("conf true", {
+  res <- RsquareSP(fit, conf = TRUE)
+  check_normal_res(res)
+  check_conf(res)
+  # TODO after change: add checks for other results being absent
+})
+
+test_that("conf true", {
+  res <- RsquareSP(fit, conf = TRUE)
+  check_normal_res(res)
+  check_conf(res)
+  check_df(res)
+  # TODO after change: add checks for other results being absent
+})
+
+test_that("conf changed to .9", {
+  res <- RsquareSP(fit, conf = TRUE, conf.level = 0.9)
+  check_normal_res(res)
+  check_df(res)
+  check_conf_90(res)
+  # TODO after change: add checks for other results being absent
+})
+
+test_that("alternatives adjusted RSquared", {
+  res <- RsquareSP(fit, alternative_adj_R2 = TRUE)
+  check_normal_res(res)
+  check_alternatives(res)
+  # TODO after change: add checks for other results being absent
+})
+
+test_that("all on", {
+  res <- RsquareSP(fit, cor = TRUE, conf = TRUE, alternative_adj_R2 = TRUE)
+  check_normal_res(res)
+  check_conf(res)
+  check_cor(res)
+  check_df(res)
+  check_alternatives(res)
+})
