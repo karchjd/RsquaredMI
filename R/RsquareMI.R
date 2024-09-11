@@ -39,12 +39,12 @@ print.RsquaredPooled <- function(x) {
 #' regression coefficients  (if `conf = TRUE`).}
 #' \item{dfe}{The error degrees of freedom of the condidence intervals of
 #' the standardized regression coefficients  (if `conf = TRUE`).}
-#' \item{zero}{The zero-order correlations between the outcome and each
-#' \item{total}{A matrix containing the betas and optionally, the error degrees of
+#' \item{zero}{The zero-order correlations between the outcome and each predictor}
+#' \item{total}{A matrix containing the betas and optionally (if `cor = TRUE`), the error degrees of
 #' freedom, confidence intervals, and zero-order correlations.}
-#' predictor (if `cor = TRUE`).}
 #'
-#' @details The function first completes the imputed datasets using `mice::complete`.
+#'
+#' @details The function first completes the imputed datasets using 'mice::complete'.
 #' It then calculates the linear model on each imputed dataset and averages
 #' the standardized coefficients and correlations across imputations.
 #' The final R-squared value is computed as the sum of the products of the
@@ -67,9 +67,9 @@ print.RsquaredPooled <- function(x) {
 #' @references
 #' Van Ginkel, J. R., & Karch, J.D. (2024). A comparison of different measures of
 #' the proportion of explained variance in multiply imputed data sets.
-#' British Journal of Mathematical and Statistical Psychology. \href{https://doi.org/10.1111/bmsp.12344}{https://doi.org/10.1111/bmsp.12344}
+#' British Journal of Mathematical and Statistical Psychology. \doi{10.1111/bmsp.12344}
 #'
-#' Karch, J.D. (2024). Improving on Adjusted R-squared. Collabra: Psychology. \href{https://doi.org/10.1525/collabra.343}{https://doi.org/10.1525/collabra.343}
+#' Karch, J.D. (2024). Improving on Adjusted R-squared. Collabra: Psychology. \doi{10.1525/collabra.343}
 
 #' @export
 RsquareSP <- function(object,
