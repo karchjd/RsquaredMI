@@ -55,6 +55,7 @@ print.RsquaredPooled <- function(x, ...) {
 #'
 #' @import mice
 #' @importFrom lm.beta lm.beta
+#' @import stats
 #'
 #' @examples
 #' library(mice)
@@ -62,11 +63,14 @@ print.RsquaredPooled <- function(x, ...) {
 #' fit <- with(imp, lm(chl ~ age + hyp + bmi))
 #' RsquareSP(fit)
 #' @references
-#' Van Ginkel, J. R., & Karch, J.D. (2024). A comparison of different measures of
+#' Van Ginkel, J.R., & Karch, J.D. (2024). A comparison of different measures of
 #' the proportion of explained variance in multiply imputed data sets.
 #' British Journal of Mathematical and Statistical Psychology. \doi{10.1111/bmsp.12344}
 #'
 #' Karch, J.D. (2024). Improving on Adjusted R-squared. Collabra: Psychology. \doi{10.1525/collabra.343}
+#'
+#' Van Ginkel, J.R. (2020). Standardized regression coefficients and newly proposed 
+#' estimators for R^2 in multiply imputed data. Psychometrika. \doi{10.1007/s11336-020-09696-4}
 
 #' @export
 RsquareSP <- function(object,
@@ -116,50 +120,58 @@ RsquareSP <- function(object,
     meanbeta <- meanbeta + meanbetam[m, ]
     meancor <- meancor + cor(datasetm)[1, 2:ncol(datasetm)]
     # CALCULATING BETA SES
-    covxy <- stats::cov(datasetm)
-    cj <- diag(solve(covxy[predictors, predictors]))
-    cjmean <- cjmean + cj
-    Sxjsquare <- diag(covxy)[predictors]
-    Sxjsquaremean <- Sxjsquaremean + Sxjsquare
-    Sxjysquare <- covxy[1, 2:ncol(covxy)]
-    Sxjysquaremean <- Sxjysquaremean + Sxjysquare
-    Sesquare <- as.vector((t(modelb$residuals) %*% modelb$residuals) / DFE)
-    Sesquaremean <- Sesquaremean + Sesquare
-    Sysquare <- var(datasetm[, outcome])
-    Sysquaremean <- Sysquaremean + Sysquare
-    bjsquare <- (modelb$coefficients)^2
-    bjsquare <- bjsquare[2:length(bjsquare)]
-    bjsquaremean <- bjsquaremean + bjsquare
-    bSxb <- t(modelb$coefficients)[-1] %*% covxy[predictors, predictors] %*%
-      (modelb$coefficients)[-1]
-    bSxbmean <- bSxbmean + bSxb
-    SEbeta <- sqrt((Sxjsquare * cj * Sesquare) / ((nrow(datasetm) - 3) * Sysquare) +
-      (bjsquare * (Sxjsquare * as.vector(bSxb) - Sxjsquare * Sesquare - Sxjysquare)) /
+    if (conf) {
+      covxy <- stats::cov(datasetm)
+      cj <- diag(solve(covxy[predictors, predictors]))
+      cjmean <- cjmean + cj
+      Sxjsquare <- diag(covxy)[predictors]
+      Sxjsquaremean <- Sxjsquaremean + Sxjsquare
+      Sxjysquare <- covxy[1, 2:ncol(covxy)]
+      Sxjysquaremean <- Sxjysquaremean + Sxjysquare
+      Sesquare <- as.vector((t(modelb$residuals) %*% modelb$residuals) / DFE)
+      Sesquaremean <- Sesquaremean + Sesquare
+      Sysquare <- var(datasetm[, outcome])
+      Sysquaremean <- Sysquaremean + Sysquare
+      bjsquare <- (modelb$coefficients)^2
+      bjsquare <- bjsquare[2:length(bjsquare)]
+      bjsquaremean <- bjsquaremean + bjsquare
+      bSxb <- t(modelb$coefficients)[-1] %*% covxy[predictors, predictors] %*%
+        (modelb$coefficients)[-1]
+      bSxbmean <- bSxbmean + bSxb
+      SEbeta <- sqrt((Sxjsquare * cj * Sesquare) / ((nrow(datasetm) - 3) * Sysquare) +
+        (bjsquare * (Sxjsquare * as.vector(bSxb) - Sxjsquare * Sesquare - Sxjysquare)) /
         ((nrow(datasetm) - 3) * (sqrt(Sysquare))^4))
-    SEb <- sqrt(diag(stats::vcov(modelb)))
-    SEb <- SEb[2:length(SEb)]
-    Umeanbeta <- Umeanbeta + SEbeta^2
+      SEb <- sqrt(diag(stats::vcov(modelb)))
+      SEb <- SEb[2:length(SEb)]
+      Umeanbeta <- Umeanbeta + SEbeta^2
+    }
   }
 
   ## pool results
   vars <- c(
-    "meanbeta", "meancor", "Sxjsquaremean", "Sxjysquaremean",
-    "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean",
-    "Sesquaremean"
+    "meanbeta", "meancor"
   )
+  if (conf) {
+    vars <- cbind(vars, "Sxjsquaremean", "Sxjysquaremean",
+      "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean",
+      "Sesquaremean"
+    ) 
+  }
   for (var in vars) {
     assign(var, get(var) / NumberOfImp)
   }
-  Bmeanbeta <- matrixStats::colVars(meanbetam)
-  Tmeanbeta <- Umeanbeta + (1 + 1 / NumberOfImp) * Bmeanbeta
-  ## CALCULATING DEGREES OF FREEDOM (REITER, 2007)
-  vcom <- ((DFE + 1) / (DFE + 3)) * DFE
-  gammameanbeta <- (1 + 1 / NumberOfImp) * Bmeanbeta / Tmeanbeta
-  vmmeanbeta <- (NumberOfImp - 1) * gammameanbeta^(-2)
-  vobsmeanbeta <- (1 - gammameanbeta) * vcom
-  DFEmeanbeta <- (1 / vmmeanbeta + 1 / vobsmeanbeta)^(-1)
-  lowermeanbeta <- meanbeta + stats::qt(alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
-  uppermeanbeta <- meanbeta + stats::qt(1 - alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
+  if (conf) {
+    Bmeanbeta <- matrixStats::colVars(meanbetam)
+    Tmeanbeta <- Umeanbeta + (1 + 1 / NumberOfImp) * Bmeanbeta
+    ## CALCULATING DEGREES OF FREEDOM (REITER, 2007)
+    vcom <- ((DFE + 1) / (DFE + 3)) * DFE
+    gammameanbeta <- (1 + 1 / NumberOfImp) * Bmeanbeta / Tmeanbeta
+    vmmeanbeta <- (NumberOfImp - 1) * gammameanbeta^(-2)
+    vobsmeanbeta <- (1 - gammameanbeta) * vcom
+    DFEmeanbeta <- (1 / vmmeanbeta + 1 / vobsmeanbeta)^(-1)
+    lowermeanbeta <- meanbeta + stats::qt(alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
+    uppermeanbeta <- meanbeta + stats::qt(1 - alpha / 2, DFEmeanbeta) * sqrt(Tmeanbeta)
+  }
 
   ### adjusted stuff
   r_squared <- sum(meanbeta * meancor)
