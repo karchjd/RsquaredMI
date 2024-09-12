@@ -25,5 +25,6 @@ Imports:
     altR2 (>= 1.1.0),
     lm.beta,
     matrixStats,
+    stats,
     mice
 RoxygenNote: 7.3.2
