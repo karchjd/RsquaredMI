@@ -56,6 +56,7 @@ print.RsquaredPooled <- function(x, ...) {
 #' @import mice
 #' @importFrom lm.beta lm.beta
 #' @import stats
+#' @import matrixStats
 #'
 #' @examples
 #' library(mice)
