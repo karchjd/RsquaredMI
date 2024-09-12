@@ -70,7 +70,7 @@ print.RsquaredPooled <- function(x, ...) {
 #'
 #' Karch, J.D. (2024). Improving on Adjusted R-squared. Collabra: Psychology. \doi{10.1525/collabra.343}
 #'
-#' Van Ginkel, J.R. (2020). Standardized regression coefficients and newly proposed 
+#' Van Ginkel, J.R. (2020). Standardized regression coefficients and newly proposed
 #' estimators for R^2 in multiply imputed data. Psychometrika. \doi{10.1007/s11336-020-09696-4}
 
 #' @export
@@ -153,10 +153,10 @@ RsquareSP <- function(object,
     "meanbeta", "meancor"
   )
   if (conf) {
-    vars <- cbind(vars, "Sxjsquaremean", "Sxjysquaremean",
+    vars <- c(vars, "Sxjsquaremean", "Sxjysquaremean",
       "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean",
       "Sesquaremean"
-    ) 
+    )
   }
   for (var in vars) {
     assign(var, get(var) / NumberOfImp)
