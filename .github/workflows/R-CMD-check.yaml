@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main, master
   workflow_dispatch:
+    inputs:
+      myCommit:
+        description: 'e11018654a9f39756d3e6a6dfdf4cf2a8ef396c0'
+        required: true
+        default: 'undefined'
+        type: string
 
 name: R-CMD-check.yaml
 
