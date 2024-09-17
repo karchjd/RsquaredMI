@@ -7,7 +7,7 @@ print.RsquaredPooled <- function(x, ...) {
   print(x$total)
   if (!is.null(x$alternative_adj_R2)) {
     cat("\n")
-    cat("Altnative adjusted R^2 estimates:", "\n")
+    cat("Alternative adjusted R^2 estimates:", "\n")
     print(x$alternative_adj_R2)
   }
 }
@@ -79,32 +79,25 @@ RsquareSP <- function(object,
   if (!mice::is.mira(object)) {
     stop("The object must have class 'mira'")
   }
-  if (mice::is.mira(object)) {
-    if ((m <- length(object$analyses)) < 2) {
-      stop("At least two imputations are needed for pooling.\n")
-    }
-    if (class((object$analyses[[1]]))[1] != "lm") {
-      stop("r^2 can only be calculated for results of the 'lm' modeling function")
-    }
+  if ((m <- length(object$analyses)) < 2) {
+    stop("At least two imputations are needed for pooling.\n")
   }
+  if (class((object$analyses[[1]]))[1] != "lm") {
+    stop("r^2 can only be calculated for results of the 'lm' modeling function")
+  }
+
+  ## init
   alpha <- 1 - conf.level
-  ## init variables
-  results <- list(
-    r_squared = NULL, r = NULL, rtotal = NULL, beta = NULL,
-    lower = NULL, upper = NULL, dfe = NULL, zero = NULL,
-    total = NULL
-  )
-  class(results) <- "RsquaredPooled"
   NumberOfImp <- length(object$analyses)
-  datasetm <- object$analyses[[1]]$model
   DFE <- object$analyses[[1]]$df.residual
-  vars <- colnames(datasetm)
+  vars <- colnames(object$analyses[[1]]$model)
   outcome <- vars[1]
   predictors <- vars[2:length(vars)]
   meanbeta <- meancor <- Umeanbeta <- cjmean <- Sxjsquaremean <-
     Sxjysquaremean <- rep(0, times = length(predictors))
   Sesquaremean <- bjsquaremean <- bSxbmean <- Sysquaremean <- 0
   meanbetam <- matrix(0, NumberOfImp, length(predictors))
+
   ## main loop
   for (m in 1:NumberOfImp) {
     datasetm <- object$analyses[[m]]$model
@@ -189,31 +182,34 @@ RsquareSP <- function(object,
 
   ## propagate results
   ### rsquared and relatives
+  results <- list()
+  class(results) <- "RsquaredPooled"
   results$r_squared <- r_squared
   results$r <- sqrt(results$r_squared)
   results$r_adj <- r_adj
   results$rtotal <- c(results$r_squared, results$r, results$r_adj)
   names(results$rtotal) <- c("R^2", "R", "adj. R^2")
+
   ## beta coefs
   results$beta <- meanbeta
   names(results$beta) <- predictors
   results$total <- as.matrix(results$beta)
   Names <- "Beta"
-  colnames(results$total) <- Names
+
   if (conf) {
     results$lower <- lowermeanbeta
     results$upper <- uppermeanbeta
     results$dfe <- DFEmeanbeta
     results$total <- cbind(results$total, results$dfe, results$lower, results$upper)
     Names <- c(Names, "df", "Lowerbound", "Upperbound")
-    colnames(results$total) <- Names
   }
   if (cor) {
     results$zero <- meancor
     names(results$zero) <- predictors
     results$total <- cbind(results$total, results$zero)
-    colnames(results$total) <- c(Names, "Zero Order")
+    Names <- c(Names, "Zero Order")
   }
+  colnames(results$total) <- Names
 
   if (alternative_adj_R2) {
     results$alternative_adj_R2 <- alt_adjusted_rs

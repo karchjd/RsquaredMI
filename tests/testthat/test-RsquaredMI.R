@@ -36,47 +36,60 @@ check_alternatives <- function(res) {
   )
 }
 
+expect_null <- function(res, fields) {
+  present_fields <- fields[fields %in% names(res)]
+  if (length(present_fields) > 0) {
+    stop(paste("Fields", paste(present_fields, collapse = ", "), "are present in 'res'."))
+  }
+  invisible(TRUE)
+}
+
 test_that("normal run", {
   res <- RsquareSP(fit)
   check_normal_res(res)
-  # TODO after change: add checks for other results being absent
+  expect_null(res, c("lower", "upper", "dfe", "alternative_adj_R2", "zero"))
+  print_out <- capture.output(print(res))
+  exp_out <- c(
+    "R-squared SP: ",
+    "      R^2         R  adj. R^2 ",
+    "0.4225007 0.6500006 0.3400008 ",
+    "",
+    "Beta Coefficients SP: ",
+    "          Beta",
+    "age 0.58470893",
+    "hyp 0.02098065",
+    "bmi 0.56689497"
+  )
+  expect_identical(print_out, exp_out)
 })
 
 test_that("cor true", {
   res <- RsquareSP(fit, cor = TRUE)
   check_normal_res(res)
   check_cor(res)
-  # TODO after change: add checks for other results being absent
+  expect_null(res, c("lower", "upper", "dfe", "alternative_adj_R2"))
 })
 
 test_that("conf true", {
   res <- RsquareSP(fit, conf = TRUE)
   check_normal_res(res)
   check_conf(res)
-  # TODO after change: add checks for other results being absent
+  # expect_null(res, c("zero", "alternative_adj_R2"))
 })
 
-test_that("conf true", {
-  res <- RsquareSP(fit, conf = TRUE)
-  check_normal_res(res)
-  check_conf(res)
-  check_df(res)
-  # TODO after change: add checks for other results being absent
-})
 
 test_that("conf changed to .9", {
   res <- RsquareSP(fit, conf = TRUE, conf.level = 0.9)
   check_normal_res(res)
   check_df(res)
   check_conf_90(res)
-  # TODO after change: add checks for other results being absent
 })
 
 test_that("alternatives adjusted RSquared", {
   res <- RsquareSP(fit, alternative_adj_R2 = TRUE)
   check_normal_res(res)
   check_alternatives(res)
-  # TODO after change: add checks for other results being absent
+  expect_null(res, c("lower", "upper", "dfe", "zero"))
 })
 
 test_that("all on", {
