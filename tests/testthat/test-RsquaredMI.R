@@ -87,3 +87,12 @@ test_that("all on", {
   check_df(res)
   check_alternatives(res)
 })
+
+
+test_that("sanity unidimensional", {
+  fit <- with(imp, lm(chl ~ age))
+  res <- RsquareSP(fit, cor = TRUE, conf = TRUE, alternative_adj_R2 = TRUE)
+  check_numbers(res$rtotal["R"], res$beta[1])
+})
+
+

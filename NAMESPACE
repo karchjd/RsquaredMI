@@ -2,5 +2,3 @@
 
 S3method(print,RsquaredPooled)
 export(RsquareSP)
-import(mice)
-importFrom(lm.beta,lm.beta)

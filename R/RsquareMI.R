@@ -53,10 +53,6 @@ print.RsquaredPooled <- function(x, ...) {
 #' calculated under the assumption that the variables are multivarate normally
 #' distributed
 #'
-#' @import mice
-#' @importFrom lm.beta lm.beta
-#' @import stats
-#' @import matrixStats
 #'
 #' @examples
 #' library(mice)
@@ -80,10 +76,10 @@ RsquareSP <- function(object,
                       conf.level = 0.95,
                       alternative_adj_R2 = FALSE) {
   ## input checks
-  if (!is.mira(object)) {
+  if (!mice::is.mira(object)) {
     stop("The object must have class 'mira'")
   }
-  if (is.mira(object)) {
+  if (mice::is.mira(object)) {
     if ((m <- length(object$analyses)) < 2) {
       stop("At least two imputations are needed for pooling.\n")
     }
