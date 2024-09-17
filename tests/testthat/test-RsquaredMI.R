@@ -89,6 +89,28 @@ test_that("alternatives adjusted RSquared", {
   res <- RsquareSP(fit, alternative_adj_R2 = TRUE)
   check_normal_res(res)
   check_alternatives(res)
+
+  print_out <- capture.output(print(res))
+  exp_out <- c(
+    "R-squared SP: ",
+    "      R^2         R  adj. R^2 ",
+    "0.4225007 0.6500006 0.3400008 ",
+    "",
+    "Beta Coefficients SP: ",
+    "          Beta",
+    "age 0.58470893",
+    "hyp 0.02098065",
+    "bmi 0.56689497",
+    "",
+    "Alternative adjusted R^2 estimates: ",
+    " Olkin_Pratt_Exact              Pratt             Claudy             Wherry ",
+    "         0.3613808          0.3595300          0.3886423          0.3700008 ",
+    "             Smith Maximum_Likelihood    Olkin_Pratt_K_1    Olkin_Pratt_K_2 ",
+    "         0.3437508          0.3586601          0.3646193          0.3618121 ",
+    "   Olkin_Pratt_K_5 ",
+    "         0.3613837 "
+  )
+  expect_identical(exp_out, print_out)
   expect_null(res, c("lower", "upper", "dfe", "zero"))
 })
 
@@ -106,6 +128,22 @@ test_that("sanity unidimensional", {
   fit <- with(imp, lm(chl ~ age))
   res <- RsquareSP(fit, cor = TRUE, conf = TRUE, alternative_adj_R2 = TRUE)
   check_numbers(res$rtotal["R"], res$beta[1])
+})
+
+test_that("incorrect input", {
+  expect_error(RsquareSP(5), "The object must have class 'mira'")
+})
+
+test_that("only one imputation", {
+  imp <- mice(nhanes, print = FALSE, seed = 16117, m = 1)
+  fit <- with(imp, lm(chl ~ age + hyp + bmi))
+  expect_error(RsquareSP(fit), "At least two imputations are needed for pooling")
+})
+
+test_that("non lm input", {
+  imp <- mice(nhanes, print = FALSE, seed = 16117)
+  fit <- with(imp, t.test(chl ~ hyp))
+  expect_error(RsquareSP(fit), "r\\^2 can only be calculated for results of the 'lm' modeling function")
 })
 
 
