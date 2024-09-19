@@ -11,7 +11,7 @@ Authors@R: c(
       email = "jginkel@fsw.leidenuniv.nl", 
       role = c("aut", "cre", "cph"))
   )
-Description: Provides R-squared values and standardized regression coefficients for linear models applied to multiply imputed datasets as obtained by 'mice'. Confidence intervals, zero-order correlations, and alternative adjusted R-squared estimates are also available. The methods are described in Van Ginkel and Karch (2024) <doi:10.1111/bmsp.12344> and in Van Ginkel (2020) <doi: 10.1007/s11336-020-09696-4>.
+Description: Provides R-squared values and standardized regression coefficients for linear models applied to multiply imputed datasets as obtained by 'mice'. Confidence intervals, zero-order correlations, and alternative adjusted R-squared estimates are also available. The methods are described in Van Ginkel and Karch (2024) <doi:10.1111/bmsp.12344> and in Van Ginkel (2020) <doi:10.1007/s11336-020-09696-4>.
 License: AGPL (>= 3)
 Encoding: UTF-8
 LazyData: true
