@@ -1,7 +1,7 @@
 Package: RSquaredMI
 Type: Package
 Title: R-Squared with Multiply Imputed Data
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(
     person(c("Julian",  "D."), "Karch",
       email = "j.d.karch@fsw.leidenuniv.nl", 
