@@ -92,15 +92,17 @@ RsquareSP <- function(object,
   DFE <- object$analyses[[1]]$df.residual
   vars <- colnames(object$analyses[[1]]$model)
   outcome <- vars[1]
-  predictors <- vars[2:length(vars)]
+  numberofpreds <- length(object$analyses[[1]]$coef)-1
   meanbeta <- meancor <- Umeanbeta <- cjmean <- Sxjsquaremean <-
-    Sxjysquaremean <- rep(0, times = length(predictors))
+    Sxjysquaremean <- rep(0, times = numberofpreds)
   Sesquaremean <- bjsquaremean <- bSxbmean <- Sysquaremean <- 0
-  meanbetam <- matrix(0, NumberOfImp, length(predictors))
+  meanbetam <- matrix(0, NumberOfImp, numberofpreds)
 
   ## main loop
   for (m in 1:NumberOfImp) {
     datasetm <- object$analyses[[m]]$model
+    modelmatrix <- stats::model.matrix(object$analyses[[m]]$model)
+    modelmatrix <- modelmatrix[,2:ncol(modelmatrix)]
     model <- object$analyses[[1]]$call
     modelb <- object$analyses[[m]]
     modelbeta <- lm.beta::lm.beta(modelb)
@@ -108,13 +110,14 @@ RsquareSP <- function(object,
       2:length(modelbeta$standardized.coefficients)
     ]
     meanbeta <- meanbeta + meanbetam[m, ]
-    meancor <- meancor + cor(datasetm)[1, 2:ncol(datasetm)]
+    cory <- cor(cbind(datasetm[,1],modelmatrix))
+    meancor <- meancor + cory[1,2:ncol(cory)]
     # CALCULATING BETA SES
     if (conf) {
-      covxy <- stats::cov(datasetm)
-      cj <- diag(solve(covxy[predictors, predictors]))
+      covxy <- stats::cov(cbind(datasetm[,1],modelmatrix))
+      cj <- diag(solve(covxy[2:nrow(covxy),2:ncol(covxy)]))
       cjmean <- cjmean + cj
-      Sxjsquare <- diag(covxy)[predictors]
+      Sxjsquare <- diag(covxy)[2:ncol(covxy)]
       Sxjsquaremean <- Sxjsquaremean + Sxjsquare
       Sxjysquare <- covxy[1, 2:ncol(covxy)]
       Sxjysquaremean <- Sxjysquaremean + Sxjysquare
@@ -125,12 +128,12 @@ RsquareSP <- function(object,
       bjsquare <- (modelb$coefficients)^2
       bjsquare <- bjsquare[2:length(bjsquare)]
       bjsquaremean <- bjsquaremean + bjsquare
-      bSxb <- t(modelb$coefficients)[-1] %*% covxy[predictors, predictors] %*%
+      bSxb <- t(modelb$coefficients)[-1] %*% covxy[2:nrow(covxy), 2:ncol(covxy)] %*%
         (modelb$coefficients)[-1]
       bSxbmean <- bSxbmean + bSxb
       SEbeta <- sqrt((Sxjsquare * cj * Sesquare) / ((nrow(datasetm) - 3) * Sysquare) +
-        (bjsquare * (Sxjsquare * as.vector(bSxb) - Sxjsquare * Sesquare - Sxjysquare)) /
-        ((nrow(datasetm) - 3) * (sqrt(Sysquare))^4))
+                       (bjsquare * (Sxjsquare * as.vector(bSxb) - Sxjsquare * Sesquare - Sxjysquare)) /
+                       ((nrow(datasetm) - 3) * (sqrt(Sysquare))^4))
       SEb <- sqrt(diag(stats::vcov(modelb)))
       SEb <- SEb[2:length(SEb)]
       Umeanbeta <- Umeanbeta + SEbeta^2
@@ -143,8 +146,8 @@ RsquareSP <- function(object,
   )
   if (conf) {
     vars <- c(vars, "Sxjsquaremean", "Sxjysquaremean",
-      "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean",
-      "Sesquaremean"
+              "Sysquaremean", "bjsquaremean", "bSxbmean", "Umeanbeta", "cjmean",
+              "Sesquaremean"
     )
   }
   for (var in vars) {
@@ -192,7 +195,7 @@ RsquareSP <- function(object,
 
   ## beta coefs
   results$beta <- meanbeta
-  names(results$beta) <- predictors
+  names(results$beta) <- colnames(modelmatrix)
   results$total <- as.matrix(results$beta)
   Names <- "Beta"
 
@@ -205,8 +208,8 @@ RsquareSP <- function(object,
   }
   if (cor) {
     results$zero <- meancor
-    names(results$zero) <- predictors
     results$total <- cbind(results$total, results$zero)
+    colnames(results$total) <- c(Names, "Zero Order")
     Names <- c(Names, "Zero Order")
   }
   colnames(results$total) <- Names
