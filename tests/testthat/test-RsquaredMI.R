@@ -141,9 +141,6 @@ test_that("only one imputation", {
 })
 
 test_that("non lm input", {
-  imp <- mice(nhanes, print = FALSE, seed = 16117)
   fit <- with(imp, t.test(chl ~ hyp))
   expect_error(RsquareSP(fit), "r\\^2 can only be calculated for results of the 'lm' modeling function")
 })
-
-
